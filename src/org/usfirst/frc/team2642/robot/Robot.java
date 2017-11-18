@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.vision.VisionThread;
 
 public class Robot extends IterativeRobot {
 
@@ -16,8 +17,8 @@ public class Robot extends IterativeRobot {
 	//Changes camera settings for vision tracking
 	public static void enableVisionTracking(boolean enabled) {
 		if (enabled) { //Vision Mode
-			camera.setBrightness(0);
-			camera.setExposureManual(0);
+			camera.setBrightness(20);
+			camera.setExposureManual(5);
 			RobotMap.visionEnabled = true;
 
 		} else { //Driving Mode
@@ -38,6 +39,11 @@ public class Robot extends IterativeRobot {
 		camera.setFPS(RobotMap.CAMERA_FPS);
 
 		enableVisionTracking(RobotMap.visionEnabled);
+
+		VisionThread gearVisionThread = new VisionThread(camera, new Pipeline(), gearpipeline -> {
+			TargetInfo.setFilterContours(gearpipeline.filterContoursOutput());
+		});
+		gearVisionThread.start();
 	}
 
 	@Override
@@ -68,6 +74,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		Scheduler.getInstance().run();
+
+		SmartDashboard.putNumber("Target X", TargetInfo.getCenterX());
+		SmartDashboard.putNumber("Target Y", TargetInfo.getCenterY());
+		SmartDashboard.putNumber("Target Area", TargetInfo.getCenterTargetArea());
+		SmartDashboard.putNumber("Number of Targets", TargetInfo.getNumTargets());
 	}
 
 	@Override
